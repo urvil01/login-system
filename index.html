@@ -106,10 +106,12 @@
                     alert(data.message || "Something went wrong");
                 }
 
-            } catch(err){
-                console.error(err);
-                alert("Server Error. Make sure Flask is running on port 5000.");
-            }
+            } catch(error){
+
+    console.log(error);
+
+    alert("Backend Connection Failed");
+}
 
         });
 
