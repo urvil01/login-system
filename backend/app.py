@@ -48,6 +48,9 @@ init_db()
 
 # SEND OTP
 def send_otp(receiver_email, otp):
+    print(receiver_email)
+    print(otp)
+    print("EMAIL SENT")
 
     try:
 
