@@ -7,7 +7,7 @@ from email.message import EmailMessage
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # EMAIL CONFIG
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL")
