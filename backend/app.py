@@ -3,10 +3,12 @@ from flask_cors import CORS
 import sqlite3
 import random
 import smtplib
-from email.message import EmailMessage
 import os
+from email.message import EmailMessage
 
 app = Flask(__name__)
+
+# CORS FIX
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # EMAIL CONFIG
@@ -14,14 +16,14 @@ SENDER_EMAIL = os.environ.get("SENDER_EMAIL")
 APP_PASSWORD = os.environ.get("APP_PASSWORD")
 
 
-# CREATE DATABASE
+# DATABASE CREATE
 def init_db():
 
     conn = sqlite3.connect("database.db")
 
     cur = conn.cursor()
 
-    cur.execute('''
+    cur.execute("""
 
         CREATE TABLE IF NOT EXISTS users(
 
@@ -37,7 +39,7 @@ def init_db():
 
         )
 
-    ''')
+    """)
 
     conn.commit()
     conn.close()
@@ -46,11 +48,8 @@ def init_db():
 init_db()
 
 
-# SEND OTP
+# SEND OTP FUNCTION
 def send_otp(receiver_email, otp):
-    print(receiver_email)
-    print(otp)
-    print("EMAIL SENT")
 
     try:
 
@@ -83,15 +82,39 @@ def send_otp(receiver_email, otp):
         return False
 
 
-# LOGIN API
+# HOME ROUTE
+@app.route('/')
+def home():
+
+    return "Backend Running Successfully 🚀"
+
+
+# SHOW USERS
+@app.route('/users')
+def users():
+
+    conn = sqlite3.connect("database.db")
+
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM users")
+
+    data = cur.fetchall()
+
+    conn.close()
+
+    return jsonify(data)
+
+
+# LOGIN / SIGNUP API
 @app.route('/login', methods=['POST'])
 def login():
 
     data = request.json
 
-    email = data['email']
-    password = data['password']
-    signup = data['signup']
+    email = data.get('email')
+    password = data.get('password')
+    signup = data.get('signup')
 
     conn = sqlite3.connect("database.db")
 
@@ -117,16 +140,18 @@ def login():
                 "message": "Account already exists"
             })
 
-        otp = str(random.randint(100000,999999))
+        otp = str(random.randint(100000, 999999))
 
         cur.execute(
             "INSERT INTO users(email,password,otp) VALUES(?,?,?)",
-            (email,password,otp)
+            (email, password, otp)
         )
 
         conn.commit()
 
-        # SEND OTP
+        print("USER INSERTED")
+
+        # SEND EMAIL
         email_sent = send_otp(email, otp)
 
         conn.close()
@@ -160,6 +185,7 @@ def login():
         db_password = user[2]
         verified = user[4]
 
+        # WRONG PASSWORD
         if password != db_password:
 
             conn.close()
@@ -180,11 +206,11 @@ def login():
             })
 
         # NOT VERIFIED
-        otp = str(random.randint(100000,999999))
+        otp = str(random.randint(100000, 999999))
 
         cur.execute(
             "UPDATE users SET otp=? WHERE email=?",
-            (otp,email)
+            (otp, email)
         )
 
         conn.commit()
@@ -208,20 +234,19 @@ def login():
             })
 
 
-# VERIFY API
+# VERIFY OTP
 @app.route('/verify', methods=['POST'])
 def verify():
 
     data = request.json
 
-    email = data['email']
-    otp = data['otp']
+    email = data.get('email')
+    otp = data.get('otp')
 
     conn = sqlite3.connect("database.db")
 
     cur = conn.cursor()
 
-    # CHECK OTP
     cur.execute(
         "SELECT * FROM users WHERE email=? AND otp=?",
         (email, otp)
@@ -229,11 +254,11 @@ def verify():
 
     user = cur.fetchone()
 
-    # OTP CORRECT
+    # SUCCESS
     if user:
 
         cur.execute(
-            "UPDATE users SET verified=1, otp='' WHERE email=?",
+            "UPDATE users SET verified=1 WHERE email=?",
             (email,)
         )
 
@@ -242,33 +267,17 @@ def verify():
         conn.close()
 
         return jsonify({
-            "success": True,
-            "message": "OTP Verified"
+            "success": True
         })
 
-    # WRONG OTP
     conn.close()
 
     return jsonify({
-        "success": False,
-        "message": "Invalid OTP"
+        "success": False
     })
-@app.route('/users')
-def users():
-
-    conn = sqlite3.connect("database.db")
-
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM users")
-
-    data = cur.fetchall()
-
-    conn.close()
-
-    return jsonify(data)
 
 
+# RUN APP
 if __name__ == "__main__":
 
     app.run(
