@@ -4,13 +4,14 @@ import sqlite3
 import random
 import smtplib
 from email.message import EmailMessage
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 # EMAIL CONFIG
-SENDER_EMAIL = "urvilgajjar@gmail.com"
-APP_PASSWORD = "bzgimuxmtsqzcskk"
+SENDER_EMAIL = os.environ.get("SENDER_EMAIL")
+APP_PASSWORD = os.environ.get("APP_PASSWORD")
 
 
 # CREATE DATABASE
