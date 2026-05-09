@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Verification</title>
+    <style>
+        *{ margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif; }
+        body{ background:#0f172a; height:100vh; display:flex; justify-content:center; align-items:center; }
+        .container{ width:400px; background:#1e293b; padding:35px; border-radius:20px; box-shadow:0 0 20px rgba(0,0,0,0.5); text-align:center; }
+        h2{ color:white; margin-bottom:10px; }
+        p{ color:#94a3b8; margin-bottom:25px; }
+        .otp-box{ display:flex; justify-content:space-between; margin-bottom:25px; }
+        .otp-box input{ width:50px; height:55px; border:none; outline:none; border-radius:10px; background:#334155; color:white; font-size:22px; text-align:center; }
+        .otp-box input:focus{ border:2px solid #6366f1; }
+        button{ width:100%; padding:14px; border:none; border-radius:10px; background:#6366f1; color:white; font-size:16px; cursor:pointer; transition:0.3s; }
+        button:hover{ background:#4f46e5; }
+        .success{ color:#22c55e; margin-top:20px; font-size:18px; }
+        .error{ color:#ef4444; margin-top:20px; font-size:15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>OTP Verification</h2>
+        <p>Enter the 6-digit OTP sent to your email</p>
+
+        <form onsubmit="verifyOTP(event)">
+            <div class="otp-box">
+                <input type="text" maxlength="1" required>
+                <input type="text" maxlength="1" required>
+                <input type="text" maxlength="1" required>
+                <input type="text" maxlength="1" required>
+                <input type="text" maxlength="1" required>
+                <input type="text" maxlength="1" required>
+            </div>
+            <button type="submit">Verify OTP</button>
+        </form>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+
+        const inputs = document.querySelectorAll(".otp-box input");
+
+        // AUTO MOVE FOCUS
+        inputs.forEach((input, index) => {
+
+            input.addEventListener("input", () => {
+                if(input.value.length === 1 && index < inputs.length - 1){
+                    inputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener("keydown", (e) => {
+                if(e.key === "Backspace" && input.value === "" && index > 0){
+                    inputs[index - 1].focus();
+                }
+            });
+
+        });
+
+        async function verifyOTP(event){
+
+            event.preventDefault();
+
+            let otp = "";
+            inputs.forEach(input => otp += input.value);
+
+            const email = localStorage.getItem("email");
+
+            if(!email){
+                document.getElementById("message").className = "error";
+                document.getElementById("message").innerHTML = "Session expired. Please login again.";
+                return;
+            }
+
+            try {
+
+                const res  = await fetch("http://127.0.0.1:5000/verify", {
+                    method:  "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body:    JSON.stringify({ email, otp })
+                });
+
+                const data = await res.json();
+                console.log("Verify response:", data); // DEBUG
+
+                if(data.success){
+
+                    document.getElementById("message").className = "success";
+                    document.getElementById("message").innerHTML = "OTP Verified Successfully ✅";
+
+                    // ✅ OTP VERIFIED → GO TO LOGIN
+                    setTimeout(() => {
+                        window.location.href = "login.html";
+                    }, 2000);
+
+                } else {
+                    document.getElementById("message").className = "error";
+                    document.getElementById("message").innerHTML = data.message || "Invalid OTP";
+                }
+
+            } catch(err){
+                console.error(err);
+                document.getElementById("message").className = "error";
+                document.getElementById("message").innerHTML = "Server Error. Make sure Flask is running.";
+            }
+        }
+
+    </script>
+</body>
+</html>

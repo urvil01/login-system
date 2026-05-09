@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login System</title>
+    <style>
+        *{ margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif; }
+        body{ background:#0f172a; height:100vh; display:flex; justify-content:center; align-items:center; }
+        .container{ width:380px; background:#1e293b; padding:35px; border-radius:20px; box-shadow:0 0 20px rgba(0,0,0,0.5); }
+        h2{ color:white; text-align:center; margin-bottom:10px; }
+        p{ color:#94a3b8; text-align:center; margin-bottom:25px; }
+        .input-group{ margin-bottom:20px; }
+        .input-group label{ color:#cbd5e1; display:block; margin-bottom:8px; }
+        .input-group input{ width:100%; padding:14px; border:none; outline:none; border-radius:10px; background:#334155; color:white; font-size:15px; }
+        .input-group input:focus{ border:2px solid #6366f1; }
+        button{ width:100%; padding:14px; border:none; border-radius:10px; background:#6366f1; color:white; font-size:16px; cursor:pointer; transition:0.3s; }
+        button:hover{ background:#4f46e5; }
+        #switchText{ margin-top:20px; text-align:center; }
+        #switchText span{ color:#6366f1; cursor:pointer; font-weight:bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 id="formTitle">Welcome Back</h2>
+        <p id="formSubtitle">Login with Email & Password</p>
+        <form id="authForm">
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="Enter email" required>
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter password" required>
+            </div>
+            <button id="submitBtn" type="submit">Sign In</button>
+        </form>
+        <p id="switchText">
+            Don't have account?
+            <span onclick="toggleForm()">Sign Up</span>
+        </p>
+    </div>
+
+    <script>
+
+        let isSignup = false;
+
+        function toggleForm(){
+            isSignup = !isSignup;
+            document.getElementById("formTitle").innerHTML   = isSignup ? "Create Account" : "Welcome Back";
+            document.getElementById("submitBtn").innerHTML   = isSignup ? "Sign Up"        : "Sign In";
+            document.getElementById("switchText").innerHTML  = isSignup
+                ? `Already have account? <span onclick="toggleForm()">Sign In</span>`
+                : `Don't have account? <span onclick="toggleForm()">Sign Up</span>`;
+        }
+
+        document.getElementById("authForm").addEventListener("submit", async function(e){
+
+            e.preventDefault();
+
+            const email    = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            localStorage.setItem("email", email);
+
+            console.log("isSignup flag:", isSignup); // DEBUG
+
+            try {
+
+                const res  = await fetch("http://127.0.0.1:5000/login", {
+                    method:  "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body:    JSON.stringify({ email, password, signup: isSignup })
+                });
+
+                const data = await res.json();
+                console.log("Server response:", data); // DEBUG
+
+                if(data.success){
+
+                    if(isSignup){
+                        // ✅ SIGNUP → OTP PAGE
+                        window.location.href = "dashboard.html";
+
+                    } else if(data.verified){
+                        // ✅ SIGNIN + VERIFIED → REAL DASHBOARD
+                        window.location.href = "index.html";
+
+                    } else {
+                        // ✅ SIGNIN + NOT VERIFIED → OTP PAGE
+                        window.location.href = "dashboard.html";
+                    }
+
+                } else {
+                    alert(data.message || "Something went wrong");
+                }
+
+            } catch(err){
+                console.error(err);
+                alert("Server Error. Make sure Flask is running on port 5000.");
+            }
+
+        });
+
+    </script>
+</body>
+</html>
