@@ -1,5 +1,0 @@
-{
-  "redirects": [
-    { "index.html": "/", "login.html": "/welcome", "permanent": true }
-  ]
-}
