@@ -67,11 +67,22 @@
 
             try {
 
-                const res  = await fetch("https://login-system-axd3.onrender.com/login", {
-                    method:  "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body:    JSON.stringify({ email, password, signup: isSignup })
-                });
+                const res = await fetch(
+    "https://login-system-axd3.onrender.com/login",
+    {
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            email: email,
+            password: password,
+            signup: isSignup
+        })
+    }
+);
 
                 const data = await res.json();
                 console.log("Server response:", data); // DEBUG
